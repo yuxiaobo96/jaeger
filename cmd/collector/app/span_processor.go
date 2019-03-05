@@ -17,7 +17,7 @@ package app
 import (
 	"time"
 
-	"github.com/uber/tchannel-go"
+	tchannel "github.com/uber/tchannel-go"
 	"go.uber.org/zap"
 
 	"github.com/jaegertracing/jaeger/cmd/collector/app/sanitizer"
@@ -119,6 +119,7 @@ func (sp *spanProcessor) ProcessSpans(mSpans []*model.Span, spanFormat string) (
 			return nil, tchannel.ErrServerBusy
 		}
 		retMe[i] = ok
+		sp.metrics.spanReceivedPerHost.Inc(1)
 	}
 	return retMe, nil
 }

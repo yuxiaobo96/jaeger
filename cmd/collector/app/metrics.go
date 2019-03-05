@@ -45,6 +45,8 @@ type SpanProcessorMetrics struct {
 	SavedErrBySvc metricsBySvc  // spans failed to save
 	serviceNames  metrics.Gauge // total number of unique service name metrics reported by this collector
 	spanCounts    map[string]CountsBySpanType
+	// spanReceivedPerHost measures spans received per collector
+	spanReceivedPerHost metrics.Counter
 }
 
 type countsBySvc struct {
@@ -80,15 +82,16 @@ func NewSpanProcessorMetrics(serviceMetrics metrics.Factory, hostMetrics metrics
 		spanCounts[otherFormatType] = newCountsBySpanType(serviceMetrics.Namespace(metrics.NSOptions{Name: "", Tags: map[string]string{"format": otherFormatType}}))
 	}
 	m := &SpanProcessorMetrics{
-		SaveLatency:    hostMetrics.Timer(metrics.TimerOptions{Name: "save-latency", Tags: nil}),
-		InQueueLatency: hostMetrics.Timer(metrics.TimerOptions{Name: "in-queue-latency", Tags: nil}),
-		SpansDropped:   hostMetrics.Counter(metrics.Options{Name: "spans.dropped", Tags: nil}),
-		BatchSize:      hostMetrics.Gauge(metrics.Options{Name: "batch-size", Tags: nil}),
-		QueueLength:    hostMetrics.Gauge(metrics.Options{Name: "queue-length", Tags: nil}),
-		SavedOkBySvc:   newMetricsBySvc(serviceMetrics.Namespace(metrics.NSOptions{Name: "", Tags: map[string]string{"result": "ok"}}), "saved-by-svc"),
-		SavedErrBySvc:  newMetricsBySvc(serviceMetrics.Namespace(metrics.NSOptions{Name: "", Tags: map[string]string{"result": "err"}}), "saved-by-svc"),
-		spanCounts:     spanCounts,
-		serviceNames:   hostMetrics.Gauge(metrics.Options{Name: "spans.serviceNames", Tags: nil}),
+		SaveLatency:         hostMetrics.Timer(metrics.TimerOptions{Name: "save-latency", Tags: nil}),
+		InQueueLatency:      hostMetrics.Timer(metrics.TimerOptions{Name: "in-queue-latency", Tags: nil}),
+		SpansDropped:        hostMetrics.Counter(metrics.Options{Name: "spans.dropped", Tags: nil}),
+		BatchSize:           hostMetrics.Gauge(metrics.Options{Name: "batch-size", Tags: nil}),
+		QueueLength:         hostMetrics.Gauge(metrics.Options{Name: "queue-length", Tags: nil}),
+		SavedOkBySvc:        newMetricsBySvc(serviceMetrics.Namespace(metrics.NSOptions{Name: "", Tags: map[string]string{"result": "ok"}}), "saved-by-svc"),
+		SavedErrBySvc:       newMetricsBySvc(serviceMetrics.Namespace(metrics.NSOptions{Name: "", Tags: map[string]string{"result": "err"}}), "saved-by-svc"),
+		spanCounts:          spanCounts,
+		serviceNames:        hostMetrics.Gauge(metrics.Options{Name: "spans.serviceNames", Tags: nil}),
+		spanReceivedPerHost: hostMetrics.Counter(metrics.Options{Name: "spans-received-per-host", Tags: nil}),
 	}
 
 	return m
